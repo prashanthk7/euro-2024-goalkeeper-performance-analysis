@@ -174,7 +174,7 @@ def build_tables():
         saves = int(outcomes.isin(SAVE_OUTCOMES).sum())
         goals = int((outcomes == GOAL_OUTCOME).sum())
         xg_faced = (
-            float(pd.to_numeric(sh["xg"], errors="coerce").sum(min_count=1) or 0)
+            float(pd.to_numeric(sh["xg"], errors="coerce").fillna(0).sum())
             if not sh.empty else 0.0
         )
         on_target = saves + goals
