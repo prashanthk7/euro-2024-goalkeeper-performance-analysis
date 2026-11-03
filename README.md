@@ -28,9 +28,11 @@ Please review and comply with the StatsBomb Open Data terms and attribution requ
 
 | Metric | Project definition |
 |---|---|
-| Save percentage | Saves from goalkeeper events ÷ explicitly attributed shots × 100 |
-| xG faced | Sum of StatsBomb shot xG for shots explicitly linked to a goalkeeper |
-| Goals conceded | Count of attributed shots with outcome Goal |
+| Save percentage | Saved shot outcomes ÷ (saved shot outcomes + goals conceded) × 100, using explicitly attributed shots |
+| Shots faced (attributed) | All shot events explicitly linked to the goalkeeper |
+| Shots on target (attributed) | Saved shot outcomes plus goals conceded |
+| xG faced | Sum of StatsBomb shot xG for all shots explicitly linked to a goalkeeper |
+| Goals conceded | Count of explicitly attributed shots with outcome Goal |
 | GSaE | Attributed xG faced − attributed goals conceded |
 | Claims | Goalkeeper events whose action label contains Claim or Collected |
 | Punches | Goalkeeper events whose action label contains Punch |
