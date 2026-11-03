@@ -1,25 +1,25 @@
 # LinkedIn project post — Euro 2024 Goalkeeper Analytics
 
-I recently revisited a soccer analytics project from the UEFA Euro 2024 Men's Championship: **Evaluation of Goalkeeper Performance**.
+I reconstructed my soccer analytics project on goalkeeper performance at the UEFA Euro 2024 Men's Championship.
 
-The aim was to look beyond clean sheets and save counts and assess goalkeepers across three areas:
+The project examines three dimensions of goalkeeper performance:
 
-- **Shot-stopping:** shots faced, saves, save percentage, xG faced and Goals Saved Above Expectation (GSaE)
+- **Shot-stopping:** shots faced, saves, save percentage, expected goals faced (xG) and Goals Saved Above Expectation (GSaE)
 - **Goalkeeper actions:** claims, punches and sweeper actions
 - **Distribution:** goal-kick volume and average goal-kick length
 
-I have reconstructed the project workflow using the public StatsBomb Euro 2024 event dataset and built four individual goalkeeper dashboard views:
+The GitHub project includes a Streamlit dashboard structure with four individual goalkeeper profile tabs:
 
 1. Koen Casteels
 2. Unai Simón
 3. Fehmi Mert Günok
 4. Predrag Rajković
 
-The dashboard is designed to make each goalkeeper's profile easy to inspect individually, with a consistent set of performance indicators and an overview for comparison.
+**Methods and tools:** Python, Pandas, NumPy, Streamlit, Plotly, event-data processing, Z-score standardization and correlation analysis.
 
-**Tools and methods:** Python, Pandas, NumPy, SciPy, Streamlit, Plotly, Z-score standardization and correlation analysis.
+**Reproducibility note:** My original notebooks and local data were lost, so this is a transparent reconstruction from my surviving project report and the public StatsBomb event data. I have corrected the goalkeeper-event parsing and added a data-link coverage audit. Reconstructed values are kept separate from figures reported in the original presentation; they should not be treated as validated until the pipeline and tests have been run against the complete tournament data.
 
-A note on reproducibility: my original notebooks and local data were lost, so this is a documented reconstruction rather than a claim to have recovered the original code. The figures from the original report are clearly separated from metrics that have been independently recalculated. StatsBomb is credited as the data source.
+**Data source:** StatsBomb Open Data (UEFA Euro 2024, competition 55, season 282).
 
 Project repository:
 https://github.com/prashanthk7/euro-2024-goalkeeper-performance-analysis
