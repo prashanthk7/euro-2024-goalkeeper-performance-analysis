@@ -22,6 +22,6 @@ jobs:
       - name: Install dependencies
         run: python -m pip install -r requirements.txt
       - name: Compile Python scripts
-        run: python -m compileall -q scripts tests
+        run: python -m compileall -q scripts src tests app.py
       - name: Run unit tests
         run: python -m unittest discover -s tests -v
