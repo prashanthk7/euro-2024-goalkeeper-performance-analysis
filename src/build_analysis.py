@@ -33,6 +33,19 @@ def location_distance(start, end):
     return float(np.hypot(end[0] - start[0], end[1] - start[1]))
 
 
+# StatsBomb shot outcome labels used to identify shots on target and saves.
+SAVE_OUTCOMES = {"saved", "saved to post", "saved off target"}
+ON_TARGET_OUTCOMES = SAVE_OUTCOMES | {"goal"}
+
+
+def is_on_target(outcome):
+    return str(outcome or "").strip().lower() in ON_TARGET_OUTCOMES
+
+
+def is_save(outcome):
+    return str(outcome or "").strip().lower() in SAVE_OUTCOMES
+
+
 def load_events():
     if not MATCH_FILE.exists():
         raise FileNotFoundError("Run python scripts/download_data.py first.")
@@ -120,10 +133,14 @@ def build_tables():
         kg = kicks[kicks.goalkeeper_id == pid] if not kicks.empty else pd.DataFrame()
         matches_played = int(ke.match_id.nunique()) if not ke.empty else int(sh.match_id.nunique())
         action_names = ke.action.fillna("").astype(str).str.lower() if not ke.empty else pd.Series(dtype=str)
-        saves = int(action_names.str.contains("save").sum())
-        goals_conceded = int((sh.shot_outcome == "Goal").sum()) if not sh.empty else 0
-        xg_faced = float(pd.to_numeric(sh.xg, errors="coerce").sum()) if not sh.empty else 0.0
-        shots_on_target = int(len(sh)) if not sh.empty else 0
+        # Use the same attributed shot records for saves, goals, xG and the
+        # save-percentage denominator. Off-target and blocked attempts are not
+        # treated as shots faced by the goalkeeper for save percentage.
+        on_target = sh[sh.shot_outcome.apply(is_on_target)] if not sh.empty else pd.DataFrame()
+        saves = int(on_target.shot_outcome.apply(is_save).sum()) if not on_target.empty else 0
+        goals_conceded = int((on_target.shot_outcome.str.lower() == "goal").sum()) if not on_target.empty else 0
+        xg_faced = float(pd.to_numeric(on_target.xg, errors="coerce").sum()) if not on_target.empty else 0.0
+        shots_on_target = int(len(on_target))
         claims = int(action_names.str.contains("claim|collected", regex=True).sum())
         punches = int(action_names.str.contains("punch", regex=False).sum())
         sweeper = int(action_names.str.contains("sweeper", regex=False).sum())
@@ -131,7 +148,7 @@ def build_tables():
             "goalkeeper_id": pid, "goalkeeper": pname,
             "matches_played": matches_played,
             "shots_faced_attributed": shots_on_target,
-            "saves_from_goalkeeper_events": saves,
+            "saves": saves,
             "goals_conceded_attributed": goals_conceded,
             "xg_faced_attributed": xg_faced,
             "save_percentage": (100 * saves / shots_on_target) if shots_on_target else np.nan,
@@ -139,7 +156,7 @@ def build_tables():
             "claims": claims, "punches": punches, "sweeper_actions": sweeper,
             "goal_kicks": int(len(kg)),
             "average_goal_kick_length": float(pd.to_numeric(kg.kick_length, errors="coerce").mean()) if not kg.empty else np.nan,
-            "attribution_note": "Shot metrics include only shots with an explicit goalkeeper link; inspect coverage before interpretation."
+            "attribution_note": "Shot metrics include only explicitly linked shots; save percentage uses goals plus saved outcomes as shots on target. Inspect attribution coverage before interpretation."
         })
     summary = pd.DataFrame(rows)
     summary["save_percentage"] = summary["save_percentage"].round(2)
