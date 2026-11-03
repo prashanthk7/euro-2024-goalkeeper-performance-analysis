@@ -22,6 +22,7 @@ OUT_DIR = Path("data/processed")
 
 # StatsBomb event outcome labels. The on-target denominator is goals + saves.
 SAVE_OUTCOMES = {"saved", "saved to post"}
+ON_TARGET_OUTCOMES = SAVE_OUTCOMES | {"goal"}
 GOAL_OUTCOME = "goal"
 
 
@@ -45,6 +46,10 @@ def location_distance(start, end):
 
 def is_save(outcome):
     return str(name(outcome) or "").strip().lower() in SAVE_OUTCOMES
+
+
+def is_on_target(outcome):
+    return str(name(outcome) or "").strip().lower() in ON_TARGET_OUTCOMES
 
 
 def load_events():
