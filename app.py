@@ -24,7 +24,9 @@ if df.empty:
 
 st.sidebar.header("Player selection")
 names = sorted(df["goalkeeper"].dropna().astype(str).unique())
-selected = st.sidebar.multiselect("Goalkeepers", names, default=names[:4])
+default_selection = (["Manuel Neuer"] + [n for n in names if n != "Manuel Neuer"][:3]
+                     if "Manuel Neuer" in names else names[:4])
+selected = st.sidebar.multiselect("Goalkeepers", names, default=default_selection)
 view = df[df["goalkeeper"].isin(selected)].copy()
 
 st.subheader("Goalkeeper overview")
