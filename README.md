@@ -37,9 +37,9 @@ StatsBomb requests that published research and visualizations identify StatsBomb
 - Claims, punches and sweeper actions = counts of corresponding goalkeeper event labels.
 - Goal-kick volume = count of passes tagged Goal Kick.
 - Average goal-kick length = mean Euclidean distance between event start and pass end locations in StatsBomb pitch coordinates.
-- Z-scores = descriptive standardized comparisons across available goalkeeper records.
+- Z-scores = descriptive standardized comparisons across available goalkeeper records, limited to shot-stopping and goalkeeper-action counts. The reconstruction deliberately avoids treating xG faced, goal-kick volume or kick length as automatically positive performance.
 
-**Important attribution limitation:** StatsBomb event feeds do not necessarily link every shot to a goalkeeper. The pipeline does not guess missing goalkeeper links. Therefore the resulting save rates, xG faced and GSaE may differ from the original presentation or from other providers. Inspect the exported shot-level CSV and coverage before comparing players. Substitution handling also requires careful review.
+**Important attribution limitation:** StatsBomb event feeds do not necessarily link every shot to a goalkeeper. The pipeline reads goalkeeper subtypes from the nested `goalkeeper.type` object and links shots through related event IDs. It does not guess missing goalkeeper links. A `data_coverage.csv` audit reports linked-shot coverage. Therefore the resulting save rates, xG faced and GSaE may differ from the original presentation or from other providers. Inspect the exported shot-level CSV and coverage before comparing players. Substitution handling also requires careful review.
 
 ## Original report findings (reported, not independently reproduced)
 
@@ -91,7 +91,7 @@ python -m src.build_analysis
 streamlit run app.py
 ```
 
-Raw match/event data is downloaded locally and excluded from Git. The app includes a tournament overview and four dedicated goalkeeper profile tabs.
+Raw match/event data is downloaded locally and excluded from Git. The app includes a tournament overview and four dedicated goalkeeper profile tabs. Run the tests before interpreting metrics. CI is configured to compile the project and execute unit tests on pushes and pull requests.
 
 ## Neural-network component
 
