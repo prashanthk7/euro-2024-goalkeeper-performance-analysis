@@ -1,47 +1,58 @@
 # UEFA Euro 2024 Goalkeeper Performance Analysis
 
-A reproducible reconstruction of a UEFA Euro 2024 goalkeeper analytics project using StatsBomb Open Data. The project examines shot-stopping, goalkeeper actions, and distribution, with player-level summaries, correlation analysis, standardized comparisons, and an interactive dashboard.
+A reproducible soccer analytics portfolio project reconstructing the evaluation of goalkeeper performance at the UEFA Euro 2024 Men's Championship using StatsBomb Open Data.
 
 **Author:** Prashanth Kodipally
 
-> **Reconstruction notice:** The original analysis scripts and dashboard files were lost. This repository rebuilds the workflow using the surviving project presentation as a reference. The recreated code and outputs are not represented as the original implementation or exact reproduction of its results.
+> **Reconstruction notice:** The original analysis scripts and raw files were lost. This repository rebuilds the workflow from the surviving presentation and public StatsBomb event data. The recreated code and outputs are not represented as the original implementation or an exact reproduction of the original results.
 
-## Project objectives
+## Four individual goalkeeper dashboards
 
-- Explore goalkeeper performance beyond traditional counts.
-- Summarize shots faced, saves, goals conceded, and expected goals faced where event attribution is available.
-- Calculate save percentage and Goals Saved Above Expectation (GSaE = xG faced − goals conceded).
-- Describe claims, punches, sweeper actions, and goal-kick distribution.
-- Compare selected goalkeepers with Z-score standardized metrics.
-- Explore selected relationships using Pearson correlation.
-- Present individual player comparisons in an interactive dashboard.
+The Streamlit dashboard now contains four dedicated profile tabs, following the four names shown in the original presentation's overall Z-score comparison:
 
-The individual dashboard can be used to examine four selected goalkeepers, including Manuel Neuer, from an individual player-performance perspective. The selection is user-controlled; it is not a claim that the four are the tournament's top four.
+1. **Koen Casteels** — original report Z-score: 1.05
+2. **Unai Simón** — original report Z-score: 0.70
+3. **Fehmi Mert Günok** — original report Z-score: 0.61
+4. **Predrag Rajković** — original report Z-score: 0.57
+
+These Z-scores are transcribed from the original presentation; they are not recalculated results. If the reconstructed event data does not resolve a goalkeeper's linked events, the dashboard displays a transparent missing-data message rather than inventing values.
+
+## Research question
+
+Which goalkeepers at Euro 2024 performed best across shot-stopping, sweeping and distribution, and can data-driven metrics reveal performance value beyond traditional statistics?
 
 ## Data source
 
-The data downloader uses the public [StatsBomb Open Data](https://github.com/statsbomb/open-data) repository and targets UEFA Euro 2024 (competition ID 55, season ID 282). Raw event JSON is downloaded locally and is excluded from Git.
+The downloader targets the official [StatsBomb Open Data](https://github.com/hudl/open-data) repository for UEFA Euro 2024 (competition ID **55**, season ID **282**). Hudl StatsBomb confirms the release covers all 51 matches and identifies these IDs for access: [official release note](https://www.hudl.com/blog/statsbomb-release-free-euro-2024-data).
 
-Please review and comply with the StatsBomb Open Data terms and attribution requirements before reusing or redistributing the data.
+StatsBomb requests that published research and visualizations identify StatsBomb as the data source and use its logo. Please review the data repository terms and StatsBomb user agreement before publishing.
 
 ## Metrics and definitions
 
-| Metric | Project definition |
-|---|---|
-| Save percentage | Saved shot outcomes ÷ (saved shot outcomes + goals conceded) × 100, using explicitly attributed shots |
-| Shots faced (attributed) | All shot events explicitly linked to the goalkeeper |
-| Shots on target (attributed) | Saved shot outcomes plus goals conceded |
-| xG faced | Sum of StatsBomb shot xG for all shots explicitly linked to a goalkeeper |
-| Goals conceded | Count of explicitly attributed shots with outcome Goal |
-| GSaE | Attributed xG faced − attributed goals conceded |
-| Claims | Goalkeeper events whose action label contains Claim or Collected |
-| Punches | Goalkeeper events whose action label contains Punch |
-| Sweeper actions | Goalkeeper events whose action label contains Sweeper |
-| Goal-kick volume | Count of passes with pass type Goal Kick |
-| Average goal-kick length | Mean Euclidean distance between event start and pass end locations |
-| Z-score | Standardized value across goalkeepers for each metric |
+- Save percentage = saves / (saves + goals conceded) × 100, based on explicitly attributed shots.
+- Shots faced = shots explicitly linked to a goalkeeper.
+- xG faced = sum of StatsBomb xG for explicitly attributed shots.
+- Goals conceded = explicitly attributed shots with outcome Goal.
+- GSaE = attributed xG faced − attributed goals conceded.
+- Claims, punches and sweeper actions = counts of corresponding goalkeeper event labels.
+- Goal-kick volume = count of passes tagged Goal Kick.
+- Average goal-kick length = mean Euclidean distance between event start and pass end locations in StatsBomb pitch coordinates.
+- Z-scores = descriptive standardized comparisons across available goalkeeper records.
 
-**Important data limitation:** StatsBomb event feeds do not necessarily provide a goalkeeper link for every shot. This reconstruction deliberately includes only explicit links and does not guess the responsible goalkeeper. Consequently, attributed shot counts, save rates, xG faced, and GSaE can differ from the original presentation or from other data providers. The code exports event-level tables so coverage can be audited. Do not compare players or make strong claims when attribution coverage is low.
+**Important attribution limitation:** StatsBomb event feeds do not necessarily link every shot to a goalkeeper. The pipeline does not guess missing goalkeeper links. Therefore the resulting save rates, xG faced and GSaE may differ from the original presentation or from other providers. Inspect the exported shot-level CSV and coverage before comparing players. Substitution handling also requires careful review.
+
+## Original report findings (reported, not independently reproduced)
+
+- Save percentage vs GSaE: r = 0.522, p = 0.009.
+- xG faced vs goals conceded: r = 0.763, p < 0.001.
+- Shots faced vs save percentage: r = −0.018, p = 0.935.
+- Sweeper actions per match vs claims per match: r = −0.129, p = 0.549.
+- Goal kicks per match vs average kick length: r = 0.581, p = 0.003.
+- Matches played vs save percentage: r = −0.046, p = 0.831.
+- The report states Casteels recorded 93.3% from 57 shots and Simón recorded +2.94 GSaE.
+- Group-level GSaE one-sample t-test: p = 0.075.
+
+These are historical values from the surviving report, not outputs verified by the reconstruction. Do not describe them as independently reproduced until the rebuilt pipeline has been run and checked.
 
 ## Repository structure
 
@@ -61,66 +72,30 @@ Please review and comply with the StatsBomb Open Data terms and attribution requ
     └── test_scripts.py
 ```
 
-## Setup
+## Run locally
 
-Python 3.11 or newer is recommended.
+Python 3.11+ recommended.
 
 ```bash
 git clone https://github.com/prashanthk7/euro-2024-goalkeeper-performance-analysis.git
 cd euro-2024-goalkeeper-performance-analysis
-
 python -m venv .venv
-# Windows:
-.venv\Scripts\activate
+# Windows: .venv\\Scripts\\activate
 # macOS/Linux:
 source .venv/bin/activate
-
 pip install -r requirements.txt
-```
 
-## Download and inspect the data
-
-```bash
 python scripts/download_data.py
 python scripts/inspect_data.py
-```
-
-The downloader retrieves the Euro 2024 match list and match event files into `data/raw/`. The raw data directory is git-ignored.
-
-## Build the analysis tables
-
-```bash
 python -m src.build_analysis
-```
-
-CSV outputs are written to `data/processed/`:
-
-- `matches.csv`
-- `shots.csv`
-- `goalkeeper_events.csv`
-- `goal_kicks.csv`
-- `goalkeeper_summary.csv`
-
-The summary includes player-level counts, derived metrics, and Z-scores. Inspect the exported shot table and attribution note before interpreting goalkeeper-level results.
-
-## Run the dashboard
-
-```bash
 streamlit run app.py
 ```
 
-The dashboard provides:
-- Player selection and a metric table.
-- Individual save-percentage and GSaE comparisons.
-- xG faced versus goals conceded.
-- Z-score comparisons across the selected metrics.
-- Pearson correlation summaries when enough complete observations exist.
+Raw match/event data is downloaded locally and excluded from Git. The app includes a tournament overview and four dedicated goalkeeper profile tabs.
 
-## Manual neural network implementation
+## Neural-network component
 
-The original presentation identifies a manual neural-network component, but it does not preserve the model architecture, prediction target, feature list, training procedure, or evaluation results. To make the repository useful without inventing those details, `src/manual_mlp.py` provides a transparent, generic one-hidden-layer regression MLP implemented with NumPy: forward propagation, ReLU activation, mean-squared-error loss, manual backpropagation, and mini-batch gradient descent.
-
-This is a **new educational reconstruction**, not evidence of the original network or its results. It is not trained on tournament goalkeeper data by default. A domain-specific model should only be configured after its target variable, input features, sample size, and evaluation plan have been established.
+The original presentation mentions a manual neural-network component but does not preserve the architecture, target, inputs or training protocol. `src/manual_mlp.py` is a generic educational one-hidden-layer NumPy regressor. It is a new transparent reconstruction, not a recovered original model or a model trained on the tournament goalkeeper data.
 
 ## Tests
 
@@ -129,14 +104,19 @@ python -m unittest discover -s tests -v
 python -m compileall -q scripts src app.py
 ```
 
-GitHub Actions runs automated Python checks on pushes and pull requests to `main`.
+## LinkedIn portfolio description
 
-## Analysis notes
+**Evaluation of Goalkeeper Performance at UEFA Euro 2024**
 
-The surviving presentation reports selected correlations, including save percentage versus GSaE and xG faced versus goals conceded. Those figures are historical presentation results, not outputs verified by this reconstructed pipeline. This repository recalculates descriptive correlations from its own generated summary and does not include the unpublished one-sample hypothesis-testing section.
+Reconstructed a soccer analytics project using StatsBomb Open Data to evaluate goalkeeper performance beyond traditional statistics. Built four individual goalkeeper dashboards for Koen Casteels, Unai Simón, Fehmi Mert Günok and Predrag Rajković, covering shot-stopping, expected goals faced, Goals Saved Above Expectation (GSaE), sweeping actions and distribution.
+
+**Methods:** Python, Pandas, NumPy, SciPy, Z-score standardization, correlation analysis and interactive visualization.
+
+**Note:** The four profile Z-scores and selected statistics in the original report are identified as source-reported until independently recalculated from the reconstructed event data.
+
+GitHub: https://github.com/prashanthk7/euro-2024-goalkeeper-performance-analysis
 
 ## Acknowledgements
 
-- [StatsBomb Open Data](https://github.com/statsbomb/open-data) for the event data.
-- UEFA Euro 2024 tournament data contributors.
-
+- StatsBomb Open Data / Hudl StatsBomb.
+- UEFA Euro 2024 event data contributors.
