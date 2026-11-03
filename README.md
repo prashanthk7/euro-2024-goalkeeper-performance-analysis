@@ -65,9 +65,15 @@ Please follow StatsBomb's data terms and attribution requirements. Raw event dat
 
 ```text
 .
+├── .github/
+│   └── workflows/
+│       └── python-checks.yml
 ├── scripts/
+│   ├── __init__.py
 │   ├── download_data.py
 │   └── inspect_data.py
+├── tests/
+│   └── test_scripts.py
 ├── .gitignore
 ├── README.md
 └── requirements.txt
