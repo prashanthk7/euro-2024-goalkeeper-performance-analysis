@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+.venv/
+venv/
+env/
+ENV/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Local data (downloaded from StatsBomb Open Data)
+data/raw/
+data/processed/
+
+# Editor and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
