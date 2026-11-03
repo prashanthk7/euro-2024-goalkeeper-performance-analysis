@@ -1,0 +1,98 @@
+name: Full Euro 2024 data analysis
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/**"
+      - "src/**"
+      - "requirements.txt"
+      - ".github/workflows/full-analysis.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt
+      - name: Download Euro 2024 StatsBomb event data
+        run: python scripts/download_data.py
+      - name: Verify complete tournament event download
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          matches_path = Path("data/raw/matches/euro_2024_matches.json")
+          matches = json.loads(matches_path.read_text(encoding="utf-8"))
+          missing, invalid = [], []
+          for match in matches:
+              path = Path("data/raw/events") / f"{match['match_id']}.json"
+              if not path.exists():
+                  missing.append(match["match_id"])
+                  continue
+              try:
+                  events = json.loads(path.read_text(encoding="utf-8"))
+                  if not isinstance(events, list):
+                      invalid.append(match["match_id"])
+              except (OSError, json.JSONDecodeError):
+                  invalid.append(match["match_id"])
+          print(f"Matches listed: {len(matches)}")
+          print(f"Missing event files: {len(missing)}")
+          print(f"Invalid event files: {len(invalid)}")
+          if missing or invalid:
+              raise SystemExit(f"Incomplete event data. Missing={missing}; invalid={invalid}")
+          PY
+      - name: Inspect source data
+        run: python scripts/inspect_data.py
+      - name: Build analysis tables
+        run: python -m src.build_analysis
+      - name: Audit goalkeeper attribution coverage
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          import pandas as pd
+          raw_matches = json.loads(Path("data/raw/matches/euro_2024_matches.json").read_text(encoding="utf-8"))
+          shots = pd.read_csv("data/processed/shots.csv")
+          summary = pd.read_csv("data/processed/goalkeeper_summary.csv")
+          all_shots = len(shots)
+          linked_shots = int(shots["goalkeeper_id"].notna().sum())
+          report = {
+              "matches_downloaded": len(raw_matches),
+              "shot_events": all_shots,
+              "shots_with_explicit_goalkeeper_attribution": linked_shots,
+              "shot_attribution_coverage_percent": round(100 * linked_shots / all_shots, 2) if all_shots else None,
+              "goalkeepers_in_summary": len(summary),
+              "goalkeeper_summary": summary.replace({float("nan"): None}).to_dict(orient="records"),
+              "interpretation_warning": "Only explicitly attributed shots are included in goalkeeper shot-stopping metrics; incomplete coverage limits player comparisons."
+          }
+          Path("data/processed/audit_report.json").write_text(json.dumps(report, indent=2, allow_nan=False), encoding="utf-8")
+          print(json.dumps({
+              "matches_downloaded": report["matches_downloaded"],
+              "shot_events": all_shots,
+              "explicitly_attributed_shots": linked_shots,
+              "attribution_coverage_percent": report["shot_attribution_coverage_percent"],
+              "goalkeepers_in_summary": len(summary)
+          }, indent=2))
+          print("\nGoalkeeper summary:")
+          print(summary[["goalkeeper", "matches_played", "shots_faced_attributed", "shots_on_target_attributed", "save_percentage", "xg_faced_attributed", "gsae_attributed"]].to_string(index=False))
+          PY
+      - name: Upload reproducible analysis outputs
+        uses: actions/upload-artifact@v4
+        with:
+          name: euro-2024-goalkeeper-analysis
+          path: data/processed/
+          if-no-files-found: error
+          retention-days: 30
