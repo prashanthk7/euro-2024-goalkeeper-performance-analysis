@@ -133,21 +133,24 @@ def build_tables():
         kg = kicks[kicks.goalkeeper_id == pid] if not kicks.empty else pd.DataFrame()
         matches_played = int(ke.match_id.nunique()) if not ke.empty else int(sh.match_id.nunique())
         action_names = ke.action.fillna("").astype(str).str.lower() if not ke.empty else pd.Series(dtype=str)
-        # Use the same attributed shot records for saves, goals, xG and the
-        # save-percentage denominator. Off-target and blocked attempts are not
-        # treated as shots faced by the goalkeeper for save percentage.
-        on_target = sh[sh.shot_outcome.apply(is_on_target)] if not sh.empty else pd.DataFrame()
-        saves = int(on_target.shot_outcome.apply(is_save).sum()) if not on_target.empty else 0
-        goals_conceded = int((on_target.shot_outcome.str.lower() == "goal").sum()) if not on_target.empty else 0
-        xg_faced = float(pd.to_numeric(on_target.xg, errors="coerce").sum()) if not on_target.empty else 0.0
-        shots_on_target = int(len(on_target))
+        # Keep the metric denominators distinct:
+        # - total attributed shots contribute to xG faced;
+        # - goals plus saved outcomes form the on-target denominator;
+        # - save percentage is saves / (saves + goals), not saves / all attempts.
+        outcomes = sh.shot_outcome.fillna("").astype(str).str.strip().str.lower() if not sh.empty else pd.Series(dtype=str)
+        saves = int(outcomes.apply(is_save).sum())
+        goals_conceded = int((outcomes == "goal").sum())
+        xg_faced = float(pd.to_numeric(sh.xg, errors="coerce").sum()) if not sh.empty else 0.0
+        shots_on_target = saves + goals_conceded
+        total_attributed_shots = int(len(sh))
         claims = int(action_names.str.contains("claim|collected", regex=True).sum())
         punches = int(action_names.str.contains("punch", regex=False).sum())
         sweeper = int(action_names.str.contains("sweeper", regex=False).sum())
         rows.append({
             "goalkeeper_id": pid, "goalkeeper": pname,
             "matches_played": matches_played,
-            "shots_faced_attributed": shots_on_target,
+            "shots_faced_attributed": total_attributed_shots,
+            "shots_on_target_attributed": shots_on_target,
             "saves": saves,
             "goals_conceded_attributed": goals_conceded,
             "xg_faced_attributed": xg_faced,
@@ -156,7 +159,7 @@ def build_tables():
             "claims": claims, "punches": punches, "sweeper_actions": sweeper,
             "goal_kicks": int(len(kg)),
             "average_goal_kick_length": float(pd.to_numeric(kg.kick_length, errors="coerce").mean()) if not kg.empty else np.nan,
-            "attribution_note": "Shot metrics include only explicitly linked shots; save percentage uses goals plus saved outcomes as shots on target. Inspect attribution coverage before interpretation."
+            "attribution_note": "Only explicitly linked shots are attributed. xG faced sums all attributed shots; save percentage uses saves divided by saves plus goals. Inspect attribution coverage before interpretation."
         })
     summary = pd.DataFrame(rows)
     summary["save_percentage"] = summary["save_percentage"].round(2)
