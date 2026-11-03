@@ -42,7 +42,7 @@ with tabs[0]:
             else:
                 val = row.iloc[0]["save_percentage"]
                 col.metric(keeper, f"{val:.1f}%" if pd.notna(val) else "n/a", "Save percentage")
-        st.dataframe(overview[["goalkeeper", "matches_played", "shots_faced_attributed",
+        st.dataframe(overview[["goalkeeper", "matches_with_goalkeeper_events", "matches_with_attributed_shots", "shots_faced_attributed",
             "shots_on_target_attributed", "saves", "goals_conceded_attributed",
             "save_percentage", "xg_faced_attributed", "gsae_attributed",
             "claims", "punches", "sweeper_actions", "goal_kicks",
@@ -62,7 +62,7 @@ for tab, keeper in zip(tabs[1:], PROFILES):
             st.info("Check the StatsBomb event links and lineup/substitution data before adding a value to this dashboard.")
             continue
         row = subset.iloc[0]
-        st.caption(f"Player ID: {row.get('goalkeeper_id', 'not available')} | Matches represented: {int(row.get('matches_played', 0))}")
+        st.caption(f"Player ID: {row.get('goalkeeper_id', 'not available')} | Matches with goalkeeper events: {int(row.get('matches_with_goalkeeper_events', 0))}")
         metric_cols = st.columns(4)
         metrics = [
             ("Save percentage", row.get("save_percentage"), "{:.1f}%"),
