@@ -1,100 +1,82 @@
-"""Four-player Streamlit dashboard for the reconstructed Euro 2024 goalkeeper analysis."""
 from pathlib import Path
+import numpy as np
 import pandas as pd
-import plotly.express as px
+import plotly.graph_objects as go
 import streamlit as st
 
-DATA = Path("data/processed/goalkeeper_summary.csv")
-PROFILES = ["Koen Casteels", "Unai Simón", "Fehmi Mert Günok", "Predrag Rajković"]
-
-st.set_page_config(page_title="Euro 2024 | Four Goalkeeper Dashboards", page_icon="🧤", layout="wide")
-st.title("UEFA Euro 2024 — Goalkeeper Performance")
-st.caption("Four individual goalkeeper dashboards | Shot-stopping • Sweeping • Distribution")
-st.markdown("**Data source:** StatsBomb Open Data (competition 55, season 282). The reconstructed pipeline only attributes shots when the event data explicitly links them to a goalkeeper.")
-
-if not DATA.exists():
-    st.warning("Processed data is not available yet.")
-    st.code("python scripts/download_data.py\npython -m src.build_analysis\nstreamlit run app.py")
-    st.stop()
-
-df = pd.read_csv(DATA)
-if df.empty:
-    st.error("The goalkeeper summary is empty.")
-    st.stop()
-
-# The four profile names are taken from the surviving presentation's overall Z-score comparison.
-# The data is not fabricated: if event attribution does not yield a profile, show that transparently.
-available = set(df["goalkeeper"].dropna().astype(str))
-tabs = st.tabs(["Tournament overview", *PROFILES])
-
+D=Path("data/processed")
+st.set_page_config(page_title="Euro 2024 Goalkeeper Profiles",page_icon="🧤",layout="wide")
+st.title("UEFA Euro 2024 | Goalkeeper Performance Profiles")
+st.caption("Shot danger zone • Claims & punches • Distribution • Summary • Z-score profile")
+files=["goalkeeper_summary.csv","shots.csv","goalkeeper_events.csv","goal_kicks.csv"]
+if not all((D/f).exists() for f in files):
+ st.warning("Processed data missing. Run scripts/download_data.py and python -m src.build_analysis.");st.stop()
+s=pd.read_csv(D/files[0]);shots=pd.read_csv(D/files[1]);events=pd.read_csv(D/files[2]);kicks=pd.read_csv(D/files[3])
+s["claims_pm"]=s.claims/s.matches_with_goalkeeper_events.replace(0,np.nan)
+s["punches_pm"]=s.punches/s.matches_with_goalkeeper_events.replace(0,np.nan)
+s["sweeper_pm"]=s.sweeper_actions/s.matches_with_goalkeeper_events.replace(0,np.nan)
+rad=["save_percentage","gsae_attributed","claims_pm","punches_pm","sweeper_pm","average_goal_kick_length"]
+for m in rad:
+ v=pd.to_numeric(s[m],errors="coerce");sd=v.std(ddof=0);s[m+"_z"]=(v-v.mean())/sd if pd.notna(sd) and sd else np.nan
+eligible=s[s.matches_with_goalkeeper_events>=4].sort_values("gsae_attributed",ascending=False)
+top=eligible.head(3).goalkeeper.tolist()
+profiles=top+(["Manuel Neuer"] if "Manuel Neuer" not in top else [])
+st.markdown("**Top-three rule:** highest reconstructed GSaE (xG faced − goals conceded), minimum four matches with goalkeeper events. Manuel Neuer is shown as a requested comparison profile.")
+def pitch(title):
+ f=go.Figure();green="#27823b"
+ f.add_shape(type="rect",x0=0,y0=0,x1=120,y1=80,line=dict(color="white",width=2),fillcolor=green,layer="below")
+ f.add_shape(type="line",x0=60,y0=0,x1=60,y1=80,line=dict(color="white"))
+ f.add_shape(type="circle",x0=50,y0=30,x1=70,y1=50,line=dict(color="white"))
+ for a,b in [(0,18),(102,120)]:f.add_shape(type="rect",x0=a,y0=18,x1=b,y1=62,line=dict(color="white"))
+ for a,b in [(0,6),(114,120)]:f.add_shape(type="rect",x0=a,y0=30,x1=b,y1=50,line=dict(color="white"))
+ f.update_layout(title=title,height=300,margin=dict(l=5,r=5,t=35,b=5),plot_bgcolor=green,paper_bgcolor="rgba(0,0,0,0)",xaxis=dict(range=[-2,122],visible=False,scaleanchor="y"),yaxis=dict(range=[-2,82],visible=False),legend=dict(orientation="h",y=-.15))
+ return f
+def points(f,d,x,y,name,color,symbol="circle"):
+ if {x,y}.issubset(d.columns):
+  q=d.dropna(subset=[x,y])
+  if len(q):f.add_trace(go.Scatter(x=q[x],y=q[y],mode="markers",name=name,marker=dict(color=color,size=9,symbol=symbol,line=dict(color="white",width=.5))))
+def draw(name):
+ row=s[s.goalkeeper.astype(str)==name]
+ if row.empty:st.warning("No summary data available for this profile.");return
+ r=row.iloc[0];pid=r.goalkeeper_id
+ sh=shots[shots.goalkeeper_id==pid].copy();ev=events[events.goalkeeper_id==pid].copy();kg=kicks[kicks.goalkeeper_id==pid].copy()
+ st.header(name)
+ st.caption(f"{int(r.matches_with_goalkeeper_events)} matches with goalkeeper events | {int(r.shots_faced_attributed)} attributed shots")
+ m=st.columns(5)
+ for c,l,v,fmt in zip(m,["Save %","GSaE","xG faced","Saves","Goals conceded"],[r.save_percentage,r.gsae_attributed,r.xg_faced_attributed,r.saves,r.goals_conceded_attributed],["{:.1f}%","{:+.2f}","{:.2f}","{:.0f}","{:.0f}"]):
+  c.metric(l,fmt.format(v) if pd.notna(v) else "n/a")
+ a,b,c=st.columns(3)
+ f=pitch("Shot danger zone")
+ if "shot_x" in sh:
+  for out,col in [("Goal","#ff5252"),("Saved","#ffe066"),("Saved to Post","#ffe066"),("Blocked","#67c7e8"),("Off T","#eeeeee"),("Wayward","#aaaaaa")]:points(f,sh[sh.shot_outcome==out],"shot_x","shot_y",out,col)
+ a.plotly_chart(f,use_container_width=True)
+ f=pitch("Claims & punches")
+ if "keeper_x" in ev:
+  points(f,ev[ev.action.astype(str).str.contains("claim|collected",case=False,regex=True)],"keeper_x","keeper_y","Claims","#ffe066")
+  points(f,ev[ev.action.astype(str).str.contains("punch",case=False)],"keeper_x","keeper_y","Punches","#ff5252","square")
+ b.plotly_chart(f,use_container_width=True)
+ f=pitch("Long distribution (≥32m)")
+ if {"start_x","start_y","end_x","end_y"}.issubset(kg.columns):
+  q=kg[kg.kick_length>=32].dropna(subset=["start_x","start_y","end_x","end_y"])
+  for _,v in q.iterrows():f.add_shape(type="line",x0=v.start_x,y0=v.start_y,x1=v.end_x,y1=v.end_y,line=dict(color="#f39c35",width=1.5))
+ c.plotly_chart(f,use_container_width=True)
+ x,y=st.columns(2)
+ f=pitch("Short distribution (<32m)")
+ if {"start_x","start_y","end_x","end_y"}.issubset(kg.columns):
+  q=kg[kg.kick_length<32].dropna(subset=["start_x","start_y","end_x","end_y"])
+  for _,v in q.iterrows():f.add_shape(type="line",x0=v.start_x,y0=v.start_y,x1=v.end_x,y1=v.end_y,line=dict(color="#48a9e6",width=1.5))
+ x.plotly_chart(f,use_container_width=True)
+ y.markdown("#### Shots & set-piece summary")
+ y.dataframe(pd.DataFrame([["Shots faced",int(r.shots_faced_attributed)],["Shots on target",int(r.shots_on_target_attributed)],["Saves",int(r.saves)],["Goals conceded",int(r.goals_conceded_attributed)],["Claims",int(r.claims)],["Punches",int(r.punches)],["Sweeper actions",int(r.sweeper_actions)],["Goal kicks",int(r.goal_kicks)],["Average kick length",f"{r.average_goal_kick_length:.1f}m" if pd.notna(r.average_goal_kick_length) else "n/a"],["Short / long kicks",f"{int((kg.kick_length<32).sum())} / {int((kg.kick_length>=32).sum())}"]],columns=["Metric","Value"]),hide_index=True,use_container_width=True)
+ st.markdown("#### Z-score profile")
+ z=[r.get(k+"_z",np.nan) for k in rad];labels=["Save %","GSaE","Claims/match","Punches/match","Sweeper/match","Avg kick length"]
+ if pd.Series(z).notna().sum()>=3:
+  f=go.Figure(go.Scatterpolar(r=z+[z[0]],theta=labels+[labels[0]],fill="toself",name=name));f.update_layout(height=350,polar=dict(radialaxis=dict(visible=True)),showlegend=False);st.plotly_chart(f,use_container_width=True)
+ st.caption("Radar Z-scores are recalculated across the tournament goalkeeper population; they are not a composite rating. Missing coordinates are not estimated.")
+tabs=st.tabs(["Tournament shortlist"]+profiles)
 with tabs[0]:
-    st.subheader("Four selected goalkeeper profiles")
-    st.caption("Selection follows the four names in the original presentation's overall Z-score chart; these are not claimed to be the four best performers after independent recalculation.")
-    overview = df[df["goalkeeper"].isin(PROFILES)].copy()
-    if overview.empty:
-        st.warning("None of the four presentation profiles have sufficient explicit goalkeeper-linked events in the current processed table. Inspect event attribution before interpreting or ranking them.")
-    else:
-        cols = st.columns(4)
-        for col, keeper in zip(cols, PROFILES):
-            row = overview[overview["goalkeeper"] == keeper]
-            if row.empty:
-                col.metric(keeper, "Not attributed")
-            else:
-                val = row.iloc[0]["save_percentage"]
-                col.metric(keeper, f"{val:.1f}%" if pd.notna(val) else "n/a", "Save percentage")
-        st.dataframe(overview[["goalkeeper", "matches_with_goalkeeper_events", "matches_with_attributed_shots", "shots_faced_attributed",
-            "shots_on_target_attributed", "saves", "goals_conceded_attributed",
-            "save_percentage", "xg_faced_attributed", "gsae_attributed",
-            "claims", "punches", "sweeper_actions", "goal_kicks",
-            "average_goal_kick_length"]], use_container_width=True, hide_index=True)
-        if not overview.empty:
-            st.plotly_chart(px.bar(overview, x="goalkeeper", y="gsae_attributed",
-                title="GSaE comparison (explicitly attributed shots)",
-                labels={"gsae_attributed": "xG faced − goals conceded"}),
-                use_container_width=True)
-
-for tab, keeper in zip(tabs[1:], PROFILES):
-    with tab:
-        subset = df[df["goalkeeper"].astype(str) == keeper]
-        st.header(keeper)
-        if subset.empty:
-            st.warning("No goalkeeper summary row was produced for this player. This is not a zero-performance result; it means the current event-level attribution method did not resolve a usable player record.")
-            st.info("Check the StatsBomb event links and lineup/substitution data before adding a value to this dashboard.")
-            continue
-        row = subset.iloc[0]
-        st.caption(f"Player ID: {row.get('goalkeeper_id', 'not available')} | Matches with goalkeeper events: {int(row.get('matches_with_goalkeeper_events', 0))}")
-        metric_cols = st.columns(4)
-        metrics = [
-            ("Save percentage", row.get("save_percentage"), "{:.1f}%"),
-            ("GSaE", row.get("gsae_attributed"), "{:+.2f}"),
-            ("xG faced", row.get("xg_faced_attributed"), "{:.2f}"),
-            ("Goals conceded", row.get("goals_conceded_attributed"), "{:.0f}"),
-        ]
-        for col, (label, value, fmt) in zip(metric_cols, metrics):
-            col.metric(label, fmt.format(value) if pd.notna(value) else "n/a")
-        left, right = st.columns(2)
-        with left:
-            st.plotly_chart(px.bar(pd.DataFrame({
-                "Metric": ["Shots faced", "Saves", "Goals conceded", "Claims", "Punches", "Sweeper actions"],
-                "Count": [row.get("shots_faced_attributed", 0), row.get("saves", 0),
-                          row.get("goals_conceded_attributed", 0), row.get("claims", 0),
-                          row.get("punches", 0), row.get("sweeper_actions", 0)]
-            }), x="Metric", y="Count", title="Shot-stopping and goalkeeper actions"),
-            use_container_width=True)
-        with right:
-            st.plotly_chart(px.bar(pd.DataFrame({
-                "Metric": ["Goal kicks", "Average kick length"],
-                "Value": [row.get("goal_kicks", 0), row.get("average_goal_kick_length", float("nan"))]
-            }), x="Metric", y="Value", title="Distribution profile"),
-            use_container_width=True)
-        zcols = [c for c in row.index if c.endswith("_zscore") and pd.notna(row[c])]
-        if zcols:
-            zdf = pd.DataFrame({"Metric": [c.replace("_zscore", "") for c in zcols],
-                                "Z-score": [row[c] for c in zcols]})
-            st.plotly_chart(px.bar(zdf, x="Metric", y="Z-score", title="Standardized profile"),
-                            use_container_width=True)
-        st.caption("Metric coverage depends on explicit event-level goalkeeper attribution. Missing values are not treated as zero.")
-        st.caption(str(row.get("attribution_note", "")))
-
-st.divider()
-st.caption("StatsBomb asks users who publish or share analysis based on Open Data to credit StatsBomb and use its logo. Validate attribution coverage and definitions before public interpretation.")
+ st.subheader("Top three by reconstructed GSaE")
+ st.dataframe(eligible[["goalkeeper","matches_with_goalkeeper_events","shots_faced_attributed","save_percentage","xg_faced_attributed","goals_conceded_attributed","gsae_attributed"]].head(10),hide_index=True,use_container_width=True)
+for tab,name in zip(tabs[1:],profiles):
+ with tab:draw(name)
+st.caption("Source: StatsBomb Open Data. Credit StatsBomb and review its publication terms before sharing.")
