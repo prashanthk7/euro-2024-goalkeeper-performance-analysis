@@ -25,3 +25,10 @@ Project repository:
 https://github.com/prashanthk7/euro-2024-goalkeeper-performance-analysis
 
 #SoccerAnalytics #FootballAnalytics #SportsAnalytics #Python #DataAnalytics #GoalkeeperAnalysis #StatsBomb
+
+
+## Updated dashboard showcase
+
+Four event-level goalkeeper dashboards follow the supplied reference: shot-danger map, claims/punches map, long and short distribution maps, shots/set-piece summary and Z-score radar.
+
+**Top three by reconstructed GSaE (minimum four matches):** Unai Simón (+2.945), Koen Casteels (+2.928), Jan Oblak (+2.800). Manuel Neuer is included as a comparison profile (+1.176). Save rates: 82.35%, 93.33%, 75.00% and 76.92%, respectively. GSaE = attributed xG faced minus attributed goals conceded. This is a transparent shortlist, not a universal goalkeeper ranking; reconstructed values are distinct from figures transcribed from the original report.
