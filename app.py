@@ -33,7 +33,7 @@ cols[0].metric("Goalkeepers in dataset", len(df))
 cols[1].metric("Selected goalkeepers", len(view))
 cols[2].metric("Attributed shots", int(view["shots_faced_attributed"].fillna(0).sum()))
 st.dataframe(view[["goalkeeper", "matches_played", "shots_faced_attributed",
-                   "saves_from_goalkeeper_events", "goals_conceded_attributed",
+                   "shots_on_target_attributed", "saves", "goals_conceded_attributed",
                    "save_percentage", "xg_faced_attributed", "gsae_attributed",
                    "claims", "punches", "sweeper_actions", "goal_kicks",
                    "average_goal_kick_length"]], use_container_width=True, hide_index=True)
