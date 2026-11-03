@@ -8,7 +8,7 @@ A reproducible soccer analytics portfolio project reconstructing the evaluation 
 
 ## Four individual goalkeeper dashboards
 
-The Streamlit dashboard now contains four dedicated profile tabs, following the four names shown in the original presentation's overall Z-score comparison:
+The Streamlit dashboard now features the top three tournament goalkeepers by reconstructed GSaE (minimum four matches with goalkeeper events): Unai Simón, Koen Casteels and Jan Oblak, plus Manuel Neuer as a comparison profile. This is a transparent GSaE shortlist, not a universal goalkeeper ranking. The original report's historical profile names and scores are retained as source-reported material below:
 
 1. **Koen Casteels** — original report Z-score: 1.05
 2. **Unai Simón** — original report Z-score: 0.70
@@ -91,7 +91,7 @@ python -m src.build_analysis
 streamlit run app.py
 ```
 
-Raw match/event data is downloaded locally and excluded from Git. The app includes a tournament overview and four dedicated goalkeeper profile tabs. Run the tests before interpreting metrics. CI is configured to compile the project and execute unit tests on pushes and pull requests.
+Raw match/event data is downloaded locally and excluded from Git. The app includes a tournament shortlist and individual dashboards for Unai Simón, Koen Casteels, Jan Oblak and Manuel Neuer, with event maps, summary metrics and a Z-score radar. Run the tests before interpreting metrics. CI is configured to compile the project and execute unit tests on pushes and pull requests.
 
 ## Neural-network component
 
