@@ -123,7 +123,7 @@ python scripts/inspect_data.py
 
 The downloader skips event files that already exist and reports match files that failed to download so they can be retried by running the script again.
 
-## Methodology and limitations
+## Tests and automated checks\n\nRun the unit tests from the repository root:\n\n\\`\\`\\`bash\npython -m unittest discover -s tests -v\n\\`\\`\\`\n\nA GitHub Actions workflow runs Python compilation checks and the unit tests on pushes to \\`main\\` and pull requests targeting \\`main\\`.\n\n## Methodology and limitations
 
 - Goalkeeper performance is affected by shot quality, match context, playing time, and team defensive structure.
 - Event-data definitions and goalkeeper attribution affect calculated metrics.
