@@ -44,7 +44,7 @@ def location_distance(start, end):
 
 
 def is_save(outcome):
-    return str(outcome or "").strip().lower() in SAVE_OUTCOMES
+    return str(name(outcome) or "").strip().lower() in SAVE_OUTCOMES
 
 
 def load_events():
