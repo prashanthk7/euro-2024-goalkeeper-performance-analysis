@@ -1,4 +1,4 @@
-"""Inspect the downloaded StatsBomb Euro 2024 data.
+"""Inspect downloaded StatsBomb Euro 2024 match and event data.
 
 Run from the repository root:
     python scripts/inspect_data.py
@@ -6,6 +6,7 @@ Run from the repository root:
 
 import json
 from pathlib import Path
+from typing import Any
 
 import pandas as pd
 
@@ -13,11 +14,17 @@ MATCHES_FILE = Path("data/raw/matches/euro_2024_matches.json")
 EVENTS_DIR = Path("data/raw/events")
 
 
-def get_name(value):
+def get_name(value: Any) -> Any:
     """Return the name from a StatsBomb nested object when available."""
     if isinstance(value, dict):
         return value.get("name")
     return value
+
+
+def load_json(path: Path) -> Any:
+    """Load a UTF-8 JSON file."""
+    with path.open("r", encoding="utf-8") as file:
+        return json.load(file)
 
 
 def inspect_matches() -> None:
@@ -27,14 +34,21 @@ def inspect_matches() -> None:
         print("Run python scripts/download_data.py first.")
         return
 
-    with MATCHES_FILE.open("r", encoding="utf-8") as file:
-        matches = json.load(file)
+    try:
+        matches = load_json(MATCHES_FILE)
+    except (OSError, json.JSONDecodeError) as error:
+        print(f"Could not read match list: {error}")
+        return
+
+    if not isinstance(matches, list):
+        print("Invalid match list: expected a JSON array.")
+        return
 
     df = pd.DataFrame(matches)
     print("\n--- MATCH OVERVIEW ---")
     print(f"Total matches: {len(df)}")
     print("\nAvailable columns:")
-    print(", ".join(df.columns))
+    print(", ".join(map(str, df.columns)))
 
     display_columns = [
         column
@@ -70,23 +84,37 @@ def inspect_events() -> None:
         print("\nNo event JSON files found. Run the download script first.")
         return
 
-    with event_files[0].open("r", encoding="utf-8") as file:
-        events = json.load(file)
+    sample_file = None
+    events = None
+    for candidate in event_files:
+        try:
+            candidate_events = load_json(candidate)
+            if isinstance(candidate_events, list):
+                sample_file = candidate
+                events = candidate_events
+                break
+        except (OSError, json.JSONDecodeError):
+            continue
+
+    if sample_file is None:
+        print("\nNo readable event JSON files were found.")
+        return
 
     df = pd.DataFrame(events)
     print("\n--- EVENT OVERVIEW ---")
-    print(f"Sample file: {event_files[0].name}")
+    print(f"Sample file: {sample_file.name}")
     print(f"Events in sample match: {len(df)}")
     print("\nAvailable event columns:")
-    print(", ".join(df.columns))
+    print(", ".join(map(str, df.columns)))
 
     if "type" in df.columns:
-        event_types = df["type"].apply(get_name).value_counts()
+        event_types = df["type"].apply(get_name).value_counts(dropna=False)
         print("\nMost common event types in this match:")
         print(event_types.head(20).to_string())
 
 
 def main() -> None:
+    """Run the match and event data inspections."""
     inspect_matches()
     inspect_events()
 
