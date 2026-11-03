@@ -58,7 +58,11 @@ jobs:
         run: python scripts/inspect_data.py
       - name: Build analysis tables
         run: python -m src.build_analysis
-      - name: Run regression tests\n        run: python -m unittest discover -s tests -v\n      - name: Compile Python files\n        run: python -m compileall -q scripts src tests app.py\n      - name: Audit goalkeeper attribution coverage
+      - name: Run regression tests
+        run: python -m unittest discover -s tests -v
+      - name: Compile Python files
+        run: python -m compileall -q scripts src tests app.py
+      - name: Audit goalkeeper attribution coverage
         run: |
           python - <<'PY'
           import json
@@ -86,7 +90,8 @@ jobs:
               "attribution_coverage_percent": report["shot_attribution_coverage_percent"],
               "goalkeepers_in_summary": len(summary)
           }, indent=2))
-          print("\nGoalkeeper summary:")
+          print("
+Goalkeeper summary:")
           print(summary[["goalkeeper", "matches_with_goalkeeper_events", "matches_with_attributed_shots", "shots_faced_attributed", "shots_on_target_attributed", "save_percentage", "xg_faced_attributed", "gsae_attributed"]].to_string(index=False))
           PY
       - name: Upload reproducible analysis outputs
