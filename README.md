@@ -6,6 +6,12 @@ A reproducible soccer analytics portfolio project reconstructing the evaluation 
 
 > **Reconstruction notice:** The original analysis scripts and raw files were lost. This repository rebuilds the workflow from the surviving presentation and public StatsBomb event data. The recreated code and outputs are not represented as the original implementation or an exact reproduction of the original results.
 
+## Goalkeeper comparison chart
+
+![Euro 2024 goalkeeper comparison chart](charts/euro-2024-goalkeeper-comparison.svg)
+
+The Streamlit shortlist includes interactive GSaE and save-percentage comparison charts. Each individual goalkeeper tab includes an individual save-percentage chart, event-location maps where coordinates are available, a metric summary and a Z-score radar. The SVG comparison chart can be downloaded and attached to a LinkedIn post.
+
 ## Four individual goalkeeper dashboards
 
 The Streamlit dashboard now features the top three tournament goalkeepers by reconstructed GSaE (minimum four matches with goalkeeper events): Unai Simón, Koen Casteels and Jan Oblak, plus Manuel Neuer as a comparison profile. This is a transparent GSaE shortlist, not a universal goalkeeper ranking. The original report's historical profile names and scores are retained as source-reported material below:
