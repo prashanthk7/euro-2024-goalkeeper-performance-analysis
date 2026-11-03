@@ -107,6 +107,8 @@ def build_tables():
                     "goalkeeper": keeper_name,
                     "xg": shot.get("statsbomb_xg"),
                     "shot_outcome": name(shot.get("outcome")),
+                    "shot_x": (ev.get("location") or [None, None])[0],
+                    "shot_y": (ev.get("location") or [None, None])[1],
                     "shooting_team": name(ev.get("team")),
                     "linked_goalkeeper_event": linked_keeper is not None,
                 })
@@ -122,6 +124,8 @@ def build_tables():
                     "action": name(keeper_detail.get("type")),
                     "outcome": name(keeper_detail.get("outcome")),
                     "position": name(ev.get("position")),
+                    "keeper_x": (ev.get("location") or [None, None])[0],
+                    "keeper_y": (ev.get("location") or [None, None])[1],
                     "related_events": ev.get("related_events") or [],
                 })
 
@@ -135,6 +139,10 @@ def build_tables():
                     "kick_length": location_distance(
                         ev.get("location"), pass_detail.get("end_location")
                     ),
+                    "start_x": (ev.get("location") or [None, None])[0],
+                    "start_y": (ev.get("location") or [None, None])[1],
+                    "end_x": (pass_detail.get("end_location") or [None, None])[0],
+                    "end_y": (pass_detail.get("end_location") or [None, None])[1],
                     "outcome": name(pass_detail.get("outcome")),
                 })
 
