@@ -16,7 +16,7 @@ import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
-BASE_URL = "https://raw.githubusercontent.com/statsbomb/open-data/master/data"
+BASE_URL = "https://raw.githubusercontent.com/hudl/open-data/master/data"
 COMPETITION_ID = 55
 SEASON_ID = 282
 RAW_DIR = Path("data/raw")
