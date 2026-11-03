@@ -42,6 +42,9 @@ def draw(name):
  sh=shots[shots.goalkeeper_id==pid].copy();ev=events[events.goalkeeper_id==pid].copy();kg=kicks[kicks.goalkeeper_id==pid].copy()
  st.header(name)
  st.caption(f"{int(r.matches_with_goalkeeper_events)} matches with goalkeeper events | {int(r.shots_faced_attributed)} attributed shots")
+ metric_fig=go.Figure(go.Bar(x=["Save %"],y=[r.save_percentage],marker_color="#21918c",text=[f"{r.save_percentage:.1f}%" if pd.notna(r.save_percentage) else "n/a"],textposition="outside"))
+ metric_fig.update_layout(title=f"{name} — shot-stopping efficiency",yaxis_title="Save percentage (%)",yaxis=dict(range=[0,100]),height=250,showlegend=False,margin=dict(l=10,r=10,t=45,b=10))
+ st.plotly_chart(metric_fig,use_container_width=True)
  m=st.columns(5)
  for c,l,v,fmt in zip(m,["Save %","GSaE","xG faced","Saves","Goals conceded"],[r.save_percentage,r.gsae_attributed,r.xg_faced_attributed,r.saves,r.goals_conceded_attributed],["{:.1f}%","{:+.2f}","{:.2f}","{:.0f}","{:.0f}"]):
   c.metric(l,fmt.format(v) if pd.notna(v) else "n/a")
@@ -77,6 +80,18 @@ tabs=st.tabs(["Tournament shortlist"]+profiles)
 with tabs[0]:
  st.subheader("Top three by reconstructed GSaE")
  st.dataframe(eligible[["goalkeeper","matches_with_goalkeeper_events","shots_faced_attributed","save_percentage","xg_faced_attributed","goals_conceded_attributed","gsae_attributed"]].head(10),hide_index=True,use_container_width=True)
+ comparison=s[s.goalkeeper.astype(str).isin(profiles)].copy().set_index("goalkeeper").reindex(profiles).dropna(subset=["goalkeeper_id"])
+ if not comparison.empty:
+  left,right=st.columns(2)
+  with left:
+   fig=go.Figure(go.Bar(x=comparison.index,y=comparison.gsae_attributed,marker_color="#21918c",text=[f"{v:+.2f}" for v in comparison.gsae_attributed],textposition="outside"))
+   fig.update_layout(title="GSaE comparison",yaxis_title="GSaE (xG faced − goals conceded)",height=380,margin=dict(l=10,r=10,t=45,b=80),xaxis_tickangle=-20)
+   st.plotly_chart(fig,use_container_width=True)
+  with right:
+   fig=go.Figure(go.Bar(x=comparison.index,y=comparison.save_percentage,marker_color="#f39c35",text=[f"{v:.1f}%" if pd.notna(v) else "n/a" for v in comparison.save_percentage],textposition="outside"))
+   fig.update_layout(title="Save percentage comparison",yaxis_title="Save percentage (%)",yaxis=dict(range=[0,100]),height=380,margin=dict(l=10,r=10,t=45,b=80),xaxis_tickangle=-20)
+   st.plotly_chart(fig,use_container_width=True)
+ st.caption("Top three are selected by GSaE with a four-match minimum; Manuel Neuer is the comparison profile.")
 for tab,name in zip(tabs[1:],profiles):
  with tab:draw(name)
 st.caption("Source: StatsBomb Open Data. Credit StatsBomb and review its publication terms before sharing.")
