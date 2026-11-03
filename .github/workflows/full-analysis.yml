@@ -90,8 +90,7 @@ jobs:
               "attribution_coverage_percent": report["shot_attribution_coverage_percent"],
               "goalkeepers_in_summary": len(summary)
           }, indent=2))
-          print("
-Goalkeeper summary:")
+          print("\nGoalkeeper summary:")
           print(summary[["goalkeeper", "matches_with_goalkeeper_events", "matches_with_attributed_shots", "shots_faced_attributed", "shots_on_target_attributed", "save_percentage", "xg_faced_attributed", "gsae_attributed"]].to_string(index=False))
           PY
       - name: Upload reproducible analysis outputs
